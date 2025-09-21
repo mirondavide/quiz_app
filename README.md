@@ -4,42 +4,17 @@ Quiz app built with Flutter
 
 A beautiful, modern Flutter quiz application with advanced UX/UI features and smooth animations.
 
-## ✨ Features
-
-### 🎨 Modern Design
-- **Material Design 3** with Google Fonts (Inter)
-- **Premium Color Palette** with deep purple gradients
-- **Smooth Animations** and micro-interactions
-- **Responsive Design** for all platforms (iOS, Android, Web, Desktop)
-
-### 🌟 Advanced UX/UI
-- **Staggered Animations** for smooth transitions
-- **Haptic Feedback** for enhanced user experience
-- **Confetti Celebrations** for high scores (70%+)
-- **Custom Animated Widgets** and buttons
-- **Professional Progress Indicators**
-
 ### 📚 Educational Content
-- **5 Categories**: Geography, Math, Nature, Astronomy, Art
 - **Difficulty Levels**: Easy (10 pts), Medium (20 pts), Hard (30 pts)
 - **Educational Explanations** for each question
 - **Comprehensive Statistics** and performance tracking
+- **Planned AI Integration**: Soon you'll be able to ask questions about any topic or upload files to provide context for personalized answers
 
-### 🏆 Gamification
-- **Point-based Scoring System**
-- **Performance Grades** with emoji feedback
-- **Visual Answer Review** with color coding
-- **Motivational Messages** based on performance
-
-## 🚀 Technologies Used
-
-- **Flutter** - Cross-platform framework
-- **Dart** - Programming language
-- **Material Design 3** - Design system
-- **Google Fonts** - Typography
-- **Confetti** - Celebration animations
-- **Flutter Staggered Animations** - Advanced animations
-- **Haptic Feedback** - Tactile responses
+### 🤖 AI Features (Planned)
+- Ask questions on any topic directly in the app
+- Upload documents or files to give context for smarter responses
+- Personalized explanations and learning support
+- Enhances educational experience with AI-powered assistance
 
 ## 📱 Screenshots
 
