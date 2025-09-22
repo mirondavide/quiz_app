@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'question.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animated_widgets.dart';
+import 'widgets/premium_navigation.dart';
+import 'widgets/advanced_effects.dart';
 
 class QuizPage extends StatefulWidget {
   @override
@@ -548,109 +552,26 @@ class _QuizPageState extends State<QuizPage> with TickerProviderStateMixin {
     final question = questions[currentQuestion];
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background
-          Container(
-            decoration: BoxDecoration(
-              gradient: AppTheme.backgroundGradient,
-            ),
+      appBar: PremiumAppBar(
+        title: 'Quiz Challenge',
+        leading: Container(
+          margin: EdgeInsets.all(AppTheme.spacingS),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceColor.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(50),
+            boxShadow: AppTheme.cardShadow,
           ),
-          
-          // Main content
-          SafeArea(
-            child: AnimationLimiter(
-              child: Column(
-                children: [
-                  // Header
-                  SlideInAnimation(
-                    delay: Duration(milliseconds: 200),
-                    child: _buildHeader(),
-                  ),
-                  
-                  // Progress section
-                  SlideInAnimation(
-                    delay: Duration(milliseconds: 400),
-                    child: _buildProgressSection(),
-                  ),
-                  
-                  // Question content
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppTheme.spacingL),
-                      child: ScaleTransition(
-                        scale: _questionAnimation,
-                        child: FadeTransition(
-                          opacity: _questionAnimation,
-                          child: Column(
-                            children: [
-                              // Question card
-                              Expanded(
-                                flex: 2,
-                                child: _buildQuestionCard(question),
-                              ),
-                              
-                              SizedBox(height: AppTheme.spacingL),
-                              
-                              // Answer options
-                              Expanded(
-                                flex: 3,
-                                child: _buildAnswerOptions(question),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          child: IconButton(
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: AppTheme.primaryColor,
             ),
+            onPressed: () => Navigator.of(context).pop(),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.all(AppTheme.spacingL),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // App logo/title
+        ),
+        actions: [
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppTheme.spacingM,
-              vertical: AppTheme.spacingS,
-            ),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-              boxShadow: AppTheme.cardShadow,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.quiz,
-                  color: AppTheme.primaryColor,
-                  size: 24,
-                ),
-                SizedBox(width: AppTheme.spacingS),
-                Text(
-                  "Quiz Premium",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Score display
-          Container(
+            margin: EdgeInsets.all(AppTheme.spacingS),
             padding: EdgeInsets.symmetric(
               horizontal: AppTheme.spacingM,
               vertical: AppTheme.spacingS,
@@ -666,21 +587,69 @@ class _QuizPageState extends State<QuizPage> with TickerProviderStateMixin {
                 Icon(
                   Icons.stars,
                   color: Colors.white,
-                  size: 20,
+                  size: 16,
                 ),
-                SizedBox(width: AppTheme.spacingS),
+                SizedBox(width: AppTheme.spacingXS),
                 Text(
-                  "$totalScore punti",
+                  '$totalScore',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: AppTheme.backgroundGradient,
+        ),
+        child: SafeArea(
+          child: AnimationLimiter(
+            child: Column(
+              children: [
+                // Progress section
+                SlideInAnimation(
+                  delay: Duration(milliseconds: 200),
+                  child: _buildProgressSection(),
+                ),
+                
+                // Question content
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppTheme.spacingL),
+                    child: ScaleTransition(
+                      scale: _questionAnimation,
+                      child: FadeTransition(
+                        opacity: _questionAnimation,
+                        child: Column(
+                          children: [
+                            // Question card
+                            Expanded(
+                              flex: 2,
+                              child: _buildQuestionCard(question),
+                            ),
+                            
+                            SizedBox(height: AppTheme.spacingL),
+                            
+                            // Answer options
+                            Expanded(
+                              flex: 3,
+                              child: _buildAnswerOptions(question),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -798,49 +767,151 @@ class _QuizPageState extends State<QuizPage> with TickerProviderStateMixin {
   }
 
   Widget _buildQuestionCard(Question question) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(AppTheme.spacingXL),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Points indicator
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppTheme.spacingM,
-              vertical: AppTheme.spacingS,
+    return Stack(
+      children: [
+        // Background particle system for correct answers
+        if (isAnswered && selectedAnswer == question.correctAnswerIndex)
+          Positioned.fill(
+            child: ParticleSystem(
+              isActive: true,
+              color: AppTheme.successColor,
+              particleCount: 20,
+              maxSize: 6,
             ),
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            ),
-            child: Text(
-              "${question.points} punti",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+          ),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(AppTheme.spacingXL),
+          decoration: BoxDecoration(
+            gradient: isAnswered
+                ? (selectedAnswer == question.correctAnswerIndex
+                    ? LinearGradient(
+                        colors: [AppTheme.successColor.withOpacity(0.1), Colors.white],
+                      )
+                    : LinearGradient(
+                        colors: [AppTheme.errorColor.withOpacity(0.1), Colors.white],
+                      ))
+                : null,
+            color: isAnswered ? null : AppTheme.surfaceColor,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            boxShadow: [
+              BoxShadow(
+                color: isAnswered
+                    ? (selectedAnswer == question.correctAnswerIndex
+                        ? AppTheme.successColor.withOpacity(0.3)
+                        : AppTheme.errorColor.withOpacity(0.3))
+                    : Colors.black.withOpacity(0.08),
+                blurRadius: 20,
+                offset: Offset(0, 10),
               ),
-            ),
+            ],
           ),
-          
-          SizedBox(height: AppTheme.spacingL),
-          
-          Text(
-            question.text,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Category and difficulty badges
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppTheme.spacingM,
+                      vertical: AppTheme.spacingS,
+                    ),
+                    decoration: BoxDecoration(
+                      color: question.categoryColor?.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          question.categoryIcon,
+                          size: 16,
+                          color: question.categoryColor,
+                        ),
+                        SizedBox(width: AppTheme.spacingS),
+                        Text(
+                          question.category,
+                          style: TextStyle(
+                            color: question.categoryColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PulsingButton(
+                    onPressed: null,
+                    glowColor: AppTheme.primaryColor,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppTheme.spacingM,
+                        vertical: AppTheme.spacingS,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            question.difficulty.icon,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: AppTheme.spacingXS),
+                          AnimatedCounter(
+                            value: question.points,
+                            textStyle: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            ' pts',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              SizedBox(height: AppTheme.spacingXL),
+              
+              // Question text with shimmer effect
+              Shimmer.fromColors(
+                baseColor: AppTheme.textPrimary,
+                highlightColor: AppTheme.primaryColor.withOpacity(0.3),
+                period: Duration(seconds: 3),
+                child: AnimatedTextKit(
+                  animatedTexts: [
+                    FadeAnimatedText(
+                      question.text,
+                      textStyle: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ) ?? TextStyle(),
+                      textAlign: TextAlign.center,
+                      duration: Duration(milliseconds: 1500),
+                    ),
+                  ],
+                  isRepeatingAnimation: false,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

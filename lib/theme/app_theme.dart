@@ -188,3 +188,36 @@ class AppTheme {
     );
   }
 }
+
+class EnhancedAppTheme {
+  static Color getTextPrimary(bool isDarkMode) {
+    return isDarkMode ? Colors.white : AppTheme.textPrimary;
+  }
+  
+  static Color getTextSecondary(bool isDarkMode) {
+    return isDarkMode ? Colors.white70 : AppTheme.textSecondary;
+  }
+  
+  static Color getTextLight(bool isDarkMode) {
+    return isDarkMode ? Colors.white54 : AppTheme.textLight;
+  }
+  
+  static Color getSurfaceColor(bool isDarkMode) {
+    return isDarkMode ? Colors.white.withOpacity(0.05) : AppTheme.surfaceColor;
+  }
+  
+  static LinearGradient getBackgroundGradient(bool isDarkMode) {
+    if (isDarkMode) {
+      return const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF0A0E27),
+          Color(0xFF1A1F3A),
+          Color(0xFF2D3748),
+        ],
+      );
+    }
+    return AppTheme.backgroundGradient;
+  }
+}

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'quiz_page.dart';
+import 'package:provider/provider.dart';
+import 'main_navigation.dart';
 import 'theme/app_theme.dart';
+import 'providers/settings_provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Set system UI overlay style
@@ -16,17 +18,34 @@ void main() {
     ),
   );
   
-  runApp(QuizApp());
+  runApp(const QuizApp());
 }
 
 class QuizApp extends StatelessWidget {
+  const QuizApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Premium Quiz App',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
-      home: QuizPage(),
+    return ChangeNotifierProvider(
+      create: (context) => SettingsProvider()..initializeSettings(),
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
+          return MaterialApp(
+            title: 'Premium Quiz App',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.theme,
+            darkTheme: AppTheme.theme.copyWith(
+              brightness: Brightness.dark,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppTheme.primaryColor,
+                brightness: Brightness.dark,
+              ),
+            ),
+            themeMode: settings.themeMode,
+            home: MainNavigationPage(),
+          );
+        },
+      ),
     );
   }
 }
