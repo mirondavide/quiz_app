@@ -1,0 +1,336 @@
+{
+  "@@locale": "en",
+  "appTitle": "AI Quiz Master",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "welcomeTitle": "Welcome to AI Quiz Master",
+  "@welcomeTitle": {
+    "description": "Welcome screen title"
+  },
+  "welcomeSubtitle": "Test your knowledge with AI-powered quizzes",
+  "@welcomeSubtitle": {
+    "description": "Welcome screen subtitle"
+  },
+  "getStarted": "Get Started",
+  "@getStarted": {
+    "description": "Get started button text"
+  },
+  "chooseLanguage": "Choose Language",
+  "@chooseLanguage": {
+    "description": "Language selection title"
+  },
+  "selectLanguageSubtitle": "Select your preferred language for the best experience",
+  "@selectLanguageSubtitle": {
+    "description": "Language selection subtitle"
+  },
+  "continueButton": "Continue",
+  "@continueButton": {
+    "description": "Continue button text"
+  },
+  "enterTopicTitle": "What would you like to learn about?",
+  "@enterTopicTitle": {
+    "description": "Topic input screen title"
+  },
+  "enterTopicSubtitle": "Enter any topic and we'll create a personalized quiz for you",
+  "@enterTopicSubtitle": {
+    "description": "Topic input screen subtitle"
+  },
+  "topicPlaceholder": "e.g., Physics, History, Programming...",
+  "@topicPlaceholder": {
+    "description": "Topic input field placeholder"
+  },
+  "generateQuiz": "Generate Quiz",
+  "@generateQuiz": {
+    "description": "Generate quiz button text"
+  },
+  "generating": "Generating",
+  "@generating": {
+    "description": "Generating text for loading screen"
+  },
+  "generatingQuiz": "Generating your personalized quiz...",
+  "@generatingQuiz": {
+    "description": "Generating quiz loading text"
+  },
+  "question": "Question",
+  "@question": {
+    "description": "Question label"
+  },
+  "next": "Next",
+  "@next": {
+    "description": "Next button text"
+  },
+  "finish": "Finish",
+  "@finish": {
+    "description": "Finish button text"
+  },
+  "correct": "Correct!",
+  "@correct": {
+    "description": "Correct answer feedback"
+  },
+  "incorrect": "Incorrect",
+  "@incorrect": {
+    "description": "Incorrect answer feedback"
+  },
+  "explanation": "Explanation",
+  "@explanation": {
+    "description": "Explanation label"
+  },
+  "yourScore": "Your Score",
+  "@yourScore": {
+    "description": "Score label"
+  },
+  "excellentWork": "Excellent Work!",
+  "@excellentWork": {
+    "description": "Excellent performance message"
+  },
+  "goodJob": "Good Job!",
+  "@goodJob": {
+    "description": "Good performance message"
+  },
+  "keepTrying": "Keep Trying!",
+  "@keepTrying": {
+    "description": "Needs improvement message"
+  },
+  "newQuiz": "New Quiz",
+  "@newQuiz": {
+    "description": "New quiz button text"
+  },
+  "reviewAnswers": "Review Answers",
+  "@reviewAnswers": {
+    "description": "Review answers button text"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings label"
+  },
+  "languageSettings": "Language Settings",
+  "@languageSettings": {
+    "description": "Language settings label"
+  },
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Dark mode label"
+  },
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications label"
+  },
+  "english": "English",
+  "@english": {
+    "description": "English language name"
+  },
+  "spanish": "Español",
+  "@spanish": {
+    "description": "Spanish language name"
+  },
+  "french": "Français",
+  "@french": {
+    "description": "French language name"
+  },
+  "german": "Deutsch",
+  "@german": {
+    "description": "German language name"
+  },
+  "chinese": "中文",
+  "@chinese": {
+    "description": "Chinese language name"
+  },
+  "italian": "Italiano",
+  "@italian": {
+    "description": "Italian language name"
+  },
+  "portuguese": "Português",
+  "@portuguese": {
+    "description": "Portuguese language name"
+  },
+  "russian": "Русский",
+  "@russian": {
+    "description": "Russian language name"
+  },
+  "japanese": "日本語",
+  "@japanese": {
+    "description": "Japanese language name"
+  },
+  "korean": "한국어",
+  "@korean": {
+    "description": "Korean language name"
+  },
+  "dutch": "Nederlands",
+  "@dutch": {
+    "description": "Dutch language name"
+  },
+  "arabic": "العربية",
+  "@arabic": {
+    "description": "Arabic language name"
+  },
+  "hindi": "हिन्दी",
+  "@hindi": {
+    "description": "Hindi language name"
+  },
+  "turkish": "Türkçe",
+  "@turkish": {
+    "description": "Turkish language name"
+  },
+  "swedish": "Svenska",
+  "@swedish": {
+    "description": "Swedish language name"
+  },
+  "polish": "Polski",
+  "@polish": {
+    "description": "Polish language name"
+  },
+  "norwegian": "Norsk",
+  "@norwegian": {
+    "description": "Norwegian language name"
+  },
+  "aiQuizGenerator": "AI Quiz Generator",
+  "@aiQuizGenerator": {
+    "description": "AI Quiz Generator title"
+  },
+  "aiQuizSubtitle": "Enter any topic and get instant personalized quiz questions powered by AI",
+  "@aiQuizSubtitle": {
+    "description": "AI Quiz subtitle description"
+  },
+  "topicInputHint": "e.g., Quantum Physics, Renaissance Art, Machine Learning...",
+  "@topicInputHint": {
+    "description": "Topic input field hint text"
+  },
+  "generateQuizQuestions": "Generate Quiz Questions",
+  "@generateQuizQuestions": {
+    "description": "Generate quiz questions button text"
+  },
+  "popularTopics": "Popular Topics",
+  "@popularTopics": {
+    "description": "Popular topics section title"
+  },
+  "generatingQuestions": "Generating Premium Questions...",
+  "@generatingQuestions": {
+    "description": "Loading text for generating questions"
+  },
+  "aiCraftingMessage": "Our AI is crafting personalized questions\njust for you",
+  "@aiCraftingMessage": {
+    "description": "AI crafting message during loading"
+  },
+  "somethingWentWrong": "Oops! Something went wrong",
+  "@somethingWentWrong": {
+    "description": "Error message title"
+  },
+  "failedGenerateQuestions": "Failed to generate questions",
+  "@failedGenerateQuestions": {
+    "description": "Failed to generate questions error message"
+  },
+  "tryAgain": "Try Again",
+  "@tryAgain": {
+    "description": "Try again button text"
+  },
+  "excellent": "Excellent! 🎉",
+  "@excellent": {
+    "description": "Excellent feedback message"
+  },
+  "notQuiteRight": "Not quite right 🤔",
+  "@notQuiteRight": {
+    "description": "Incorrect answer feedback"
+  },
+  "pointsEarned": "+{points} points earned!",
+  "@pointsEarned": {
+    "description": "Points earned message",
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "quizComplete": "Quiz Complete!",
+  "@quizComplete": {
+    "description": "Quiz completion message"
+  },
+  "outstandingPerformance": "Outstanding Performance!",
+  "@outstandingPerformance": {
+    "description": "Outstanding performance message"
+  },
+  "greatJob": "Great Job!",
+  "@greatJob": {
+    "description": "Great job message"
+  },
+  "goodEffort": "Good Effort!",
+  "@goodEffort": {
+    "description": "Good effort message"
+  },
+  "keepLearning": "Keep Learning!",
+  "@keepLearning": {
+    "description": "Keep learning message"
+  },
+  "points": "Points",
+  "@points": {
+    "description": "Points label"
+  },
+  "accuracy": "Accuracy",
+  "@accuracy": {
+    "description": "Accuracy label"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button text"
+  },
+  "newTopic": "New Topic",
+  "@newTopic": {
+    "description": "New topic button text"
+  },
+  "outOf": "of",
+  "@outOf": {
+    "description": "Of preposition for question counter"
+  },
+  "home": "Home",
+  "@home": {
+    "description": "Home tab label"
+  },
+  "quiz": "Quiz",
+  "@quiz": {
+    "description": "Quiz tab label"
+  },
+  "about": "About",
+  "@about": {
+    "description": "About tab label"
+  },
+  "welcome": "Welcome",
+  "@welcome": {
+    "description": "Welcome greeting"
+  },
+  "startQuiz": "Start Quiz",
+  "@startQuiz": {
+    "description": "Start quiz button text"
+  },
+  "createQuiz": "Create personalized quizzes",
+  "@createQuiz": {
+    "description": "Create quiz description"
+  },
+  "customize": "Customize your experience",
+  "@customize": {
+    "description": "Customize description"
+  },
+  "appearance": "Appearance",
+  "@appearance": {
+    "description": "Appearance settings section"
+  },
+  "toggleDarkMode": "Switch between light and dark themes",
+  "@toggleDarkMode": {
+    "description": "Dark mode toggle description"
+  },
+  "hapticFeedback": "Haptic Feedback",
+  "@hapticFeedback": {
+    "description": "Haptic feedback setting"
+  },
+  "enableVibration": "Enable vibration for interactions",
+  "@enableVibration": {
+    "description": "Haptic feedback description"
+  },
+  "aboutApp": "About App",
+  "@aboutApp": {
+    "description": "About app menu item"
+  },
+  "appInfo": "Learn more about the app",
+  "@appInfo": {
+    "description": "App info description"
+  }
+}
