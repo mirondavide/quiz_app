@@ -4,11 +4,14 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:provider/provider.dart';
+import 'l10n/app_localizations.dart';
 import 'question.dart';
+import 'services/ai_topic_generator.dart' as AI;
+import 'services/language_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/animated_widgets.dart';
-import 'widgets/premium_navigation.dart';
-import 'widgets/advanced_effects.dart';
+import 'widgets/premium_widgets.dart';
 
 class QuizPage extends StatefulWidget {
   @override
@@ -22,103 +25,63 @@ class _QuizPageState extends State<QuizPage> with TickerProviderStateMixin {
   List<bool> correctAnswers = [];
   bool isAnswered = false;
   int? selectedAnswer;
+  bool isLoadingQuestions = false;
+  bool hasQuestions = false;
+  String? errorMessage;
   
+  late AnimationController _heroController;
   late AnimationController _questionController;
   late AnimationController _progressController;
   late ConfettiController _confettiController;
+  late Animation<double> _heroAnimation;
   late Animation<double> _questionAnimation;
   late Animation<double> _progressAnimation;
   
-  List<Question> questions = [
-    Question(
-      text: "Qual è la capitale d'Italia?",
-      options: ["Roma", "Milano", "Napoli", "Torino"],
-      correctAnswerIndex: 0,
-      explanation: "Roma è la capitale d'Italia dal 1871, quando l'Italia fu unificata.",
-      categoryIcon: Icons.location_city,
-      categoryColor: Colors.blue,
-      category: "Geografia",
-      difficulty: QuestionDifficulty.easy,
-    ),
-    Question(
-      text: "Quanto fa 5 × 5?",
-      options: ["10", "25", "15", "30"],
-      correctAnswerIndex: 1,
-      explanation: "5 × 5 = 25. È una delle tabelline di base della matematica.",
-      categoryIcon: Icons.calculate,
-      categoryColor: Colors.green,
-      category: "Matematica",
-      difficulty: QuestionDifficulty.easy,
-    ),
-    Question(
-      text: "Qual è l'animale simbolo dell'Australia?",
-      options: ["Canguro", "Elefante", "Leone", "Pinguino"],
-      correctAnswerIndex: 0,
-      explanation: "Il canguro è l'animale simbolo dell'Australia ed è presente anche nello stemma nazionale.",
-      categoryIcon: Icons.pets,
-      categoryColor: Colors.orange,
-      category: "Natura",
-      difficulty: QuestionDifficulty.medium,
-    ),
-    Question(
-      text: "Quale pianeta è conosciuto come il Pianeta Rosso?",
-      options: ["Venere", "Marte", "Giove", "Saturno"],
-      correctAnswerIndex: 1,
-      explanation: "Marte è chiamato il Pianeta Rosso a causa del ferro ossidato sulla sua superficie.",
-      categoryIcon: Icons.public,
-      categoryColor: Colors.red,
-      category: "Astronomia",
-      difficulty: QuestionDifficulty.medium,
-    ),
-    Question(
-      text: "Chi ha dipinto la Gioconda?",
-      options: ["Michelangelo", "Leonardo da Vinci", "Raffaello", "Donatello"],
-      correctAnswerIndex: 1,
-      explanation: "La Gioconda (Monna Lisa) è stata dipinta da Leonardo da Vinci tra il 1503 e il 1506.",
-      categoryIcon: Icons.brush,
-      categoryColor: Colors.purple,
-      category: "Arte",
-      difficulty: QuestionDifficulty.hard,
-    ),
-  ];
+  List<Question> questions = [];
 
   @override
   void initState() {
     super.initState();
     
-    // Initialize answer tracking
-    answeredQuestions = List.filled(questions.length, false);
-    correctAnswers = List.filled(questions.length, false);
-    
-    // Initialize animations
+    // Initialize premium animations
+    _heroController = AnimationController(
+      duration: AppTheme.animationExtraSlow,
+      vsync: this,
+    );
     _questionController = AnimationController(
-      duration: Duration(milliseconds: 800),
+      duration: AppTheme.animationSlow,
       vsync: this,
     );
     _progressController = AnimationController(
-      duration: Duration(milliseconds: 1000),
+      duration: AppTheme.animationSlow,
       vsync: this,
     );
     _confettiController = ConfettiController(
-      duration: Duration(seconds: 2),
+      duration: Duration(seconds: 3),
     );
     
+    _heroAnimation = CurvedAnimation(
+      parent: _heroController,
+      curve: AppTheme.bounceCurve,
+    );
     _questionAnimation = CurvedAnimation(
       parent: _questionController,
-      curve: Curves.elasticOut,
+      curve: AppTheme.smoothCurve,
     );
     _progressAnimation = CurvedAnimation(
       parent: _progressController,
-      curve: Curves.easeInOut,
+      curve: AppTheme.defaultCurve,
     );
     
     // Start initial animations
+    _heroController.forward();
     _questionController.forward();
     _progressController.forward();
   }
 
   @override
   void dispose() {
+    _heroController.dispose();
     _questionController.dispose();
     _progressController.dispose();
     _confettiController.dispose();
@@ -146,91 +109,211 @@ class _QuizPageState extends State<QuizPage> with TickerProviderStateMixin {
       }
     });
     
-    // Show result feedback
-    _showAnswerFeedback();
+    // Show premium result feedback
+    _showPremiumAnswerFeedback();
     
-    // Auto-advance after showing explanation
-    Future.delayed(Duration(milliseconds: 3000), () {
+    // Auto-advance with animation
+    Future.delayed(Duration(milliseconds: 3500), () {
       if (mounted) {
         _nextQuestion();
       }
     });
   }
-
-  void _showAnswerFeedback() {
-    bool isCorrect = correctAnswers[currentQuestion];
+  
+  Future<void> _generateQuestionsForTopic(String topic, {int count = 5}) async {
+    setState(() {
+      isLoadingQuestions = true;
+      errorMessage = null;
+      hasQuestions = false;
+    });
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Container(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      isCorrect ? Icons.check_circle : Icons.cancel,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          isCorrect ? "Corretto! 🎉" : "Sbagliato! 😔",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        if (isCorrect)
-                          Text(
-                            "+${questions[currentQuestion].points} punti",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white70,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+    try {
+      // Get current language from LanguageService
+      final languageService = Provider.of<LanguageService>(context, listen: false);
+      final currentLanguage = languageService.currentLocale.languageCode;
+      
+      final generatedQuestions = await AI.AITopicGenerator.generateQuestions(
+        topic, 
+        count: count, 
+        language: currentLanguage,
+      );
+      
+      // Convert AI.Question to quiz_page.Question format
+      final convertedQuestions = generatedQuestions.map((aiQuestion) {
+        return Question(
+          text: aiQuestion.text,
+          options: aiQuestion.options,
+          correctAnswerIndex: aiQuestion.correctIndex,
+          explanation: aiQuestion.explanation,
+          categoryIcon: _getCategoryIcon(aiQuestion.topic),
+          categoryColor: _getCategoryColor(aiQuestion.topic),
+          category: aiQuestion.topic,
+          difficulty: _convertDifficulty(aiQuestion.difficulty),
+        );
+      }).toList();
+      
+      setState(() {
+        questions = convertedQuestions;
+        answeredQuestions = List.filled(questions.length, false);
+        correctAnswers = List.filled(questions.length, false);
+        isLoadingQuestions = false;
+        hasQuestions = true;
+        currentQuestion = 0;
+        totalScore = 0;
+        isAnswered = false;
+        selectedAnswer = null;
+      });
+      
+      // Reset and start animations
+      _questionController.reset();
+      _progressController.reset();
+      _questionController.forward();
+      _progressController.forward();
+      
+    } catch (e) {
+      setState(() {
+        isLoadingQuestions = false;
+        errorMessage = 'Failed to generate questions. Please try again.';
+      });
+    }
+  }
+  
+  IconData _getCategoryIcon(String topic) {
+    final topicLower = topic.toLowerCase();
+    if (topicLower.contains('math') || topicLower.contains('calcul') || topicLower.contains('algebra')) {
+      return Icons.calculate;
+    } else if (topicLower.contains('physics') || topicLower.contains('science')) {
+      return Icons.science;
+    } else if (topicLower.contains('history')) {
+      return Icons.history_edu;
+    } else if (topicLower.contains('geography')) {
+      return Icons.public;
+    } else if (topicLower.contains('literature') || topicLower.contains('art')) {
+      return Icons.brush;
+    } else if (topicLower.contains('biology') || topicLower.contains('nature')) {
+      return Icons.eco;
+    } else if (topicLower.contains('chemistry')) {
+      return Icons.biotech;
+    } else if (topicLower.contains('computer') || topicLower.contains('programming')) {
+      return Icons.computer;
+    } else if (topicLower.contains('psychology')) {
+      return Icons.psychology;
+    }
+    return Icons.school;
+  }
+  
+  Color _getCategoryColor(String topic) {
+    final topicLower = topic.toLowerCase();
+    if (topicLower.contains('math') || topicLower.contains('calcul') || topicLower.contains('algebra')) {
+      return Colors.blue;
+    } else if (topicLower.contains('physics') || topicLower.contains('science')) {
+      return Colors.indigo;
+    } else if (topicLower.contains('history')) {
+      return Colors.brown;
+    } else if (topicLower.contains('geography')) {
+      return Colors.green;
+    } else if (topicLower.contains('literature') || topicLower.contains('art')) {
+      return Colors.purple;
+    } else if (topicLower.contains('biology') || topicLower.contains('nature')) {
+      return Colors.lightGreen;
+    } else if (topicLower.contains('chemistry')) {
+      return Colors.orange;
+    } else if (topicLower.contains('computer') || topicLower.contains('programming')) {
+      return Colors.teal;
+    } else if (topicLower.contains('psychology')) {
+      return Colors.pink;
+    }
+    return AppTheme.primaryColor;
+  }
+  
+  QuestionDifficulty _convertDifficulty(String difficulty) {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return QuestionDifficulty.easy;
+      case 'hard':
+        return QuestionDifficulty.hard;
+      default:
+        return QuestionDifficulty.medium;
+    }
+  }
+
+  void _showPremiumAnswerFeedback() {
+    bool isCorrect = correctAnswers[currentQuestion];
+    final localizations = AppLocalizations.of(context)!;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: EdgeInsets.all(AppTheme.spacingL),
+        padding: EdgeInsets.all(AppTheme.spacingXL),
+        decoration: BoxDecoration(
+          gradient: isCorrect ? AppTheme.successGradient : AppTheme.errorGradient,
+          borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+          boxShadow: AppTheme.elevatedShadow,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Result Icon
+            Container(
+              padding: EdgeInsets.all(AppTheme.spacingL),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
               ),
-              if (questions[currentQuestion].explanation != null)
-                Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text(
-                    questions[currentQuestion].explanation!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withOpacity(0.9),
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
+              child: Icon(
+                isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                color: Colors.white,
+                size: 48,
+              ),
+            ),
+            
+            SizedBox(height: AppTheme.spacingL),
+            
+            // Result Text
+            Text(
+              isCorrect ? localizations.excellent : localizations.notQuiteRight,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            
+            SizedBox(height: AppTheme.spacingM),
+            
+            if (isCorrect)
+              Text(
+                localizations.pointsEarned(questions[currentQuestion].points),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withOpacity(0.9),
                 ),
+              ),
+            
+            if (questions[currentQuestion].explanation != null) ...[
+              SizedBox(height: AppTheme.spacingL),
+              Container(
+                padding: EdgeInsets.all(AppTheme.spacingM),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                ),
+                child: Text(
+                  questions[currentQuestion].explanation!,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.95),
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ],
-          ),
+          ],
         ),
-        backgroundColor: isCorrect ? AppTheme.successColor : AppTheme.errorColor,
-        duration: Duration(milliseconds: 2800),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        ),
-        margin: EdgeInsets.all(AppTheme.spacingM),
       ),
     );
   }
@@ -253,6 +336,7 @@ class _QuizPageState extends State<QuizPage> with TickerProviderStateMixin {
     // Calculate results
     int correctCount = correctAnswers.where((answer) => answer).length;
     double percentage = (correctCount / questions.length) * 100;
+    final localizations = AppLocalizations.of(context)!;
     
     // Trigger confetti for good scores
     if (percentage >= 70) {
@@ -268,266 +352,208 @@ class _QuizPageState extends State<QuizPage> with TickerProviderStateMixin {
     }
     
     String getGradeMessage(double percentage) {
-      if (percentage >= 90) return "Perfetto!";
-      if (percentage >= 80) return "Eccellente!";
-      if (percentage >= 70) return "Molto bene!";
-      if (percentage >= 60) return "Buon lavoro!";
-      return "Continua a studiare!";
+      if (percentage >= 90) return localizations.outstandingPerformance;
+      if (percentage >= 80) return localizations.excellentWork;
+      if (percentage >= 70) return localizations.greatJob;
+      if (percentage >= 60) return localizations.goodEffort;
+      return localizations.keepLearning;
     }
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => Stack(
-        children: [
-          AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            ),
-            contentPadding: EdgeInsets.zero,
-            content: Container(
-              width: MediaQuery.of(context).size.width * 0.9,
-              decoration: BoxDecoration(
-                gradient: AppTheme.backgroundGradient,
-                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header
-                  Container(
-                    padding: EdgeInsets.all(AppTheme.spacingL),
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(AppTheme.radiusLarge),
-                        topRight: Radius.circular(AppTheme.radiusLarge),
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+        ),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          decoration: BoxDecoration(
+            gradient: AppTheme.cardGradient,
+            borderRadius: BorderRadius.circular(AppTheme.radiusXLarge),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Premium Header
+              Container(
+                padding: EdgeInsets.all(AppTheme.spacingXL),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.heroGradient,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(AppTheme.radiusXLarge),
+                    topRight: Radius.circular(AppTheme.radiusXLarge),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      getGradeEmoji(percentage),
+                      style: TextStyle(fontSize: 48),
+                    ),
+                    SizedBox(height: AppTheme.spacingM),
+                    Text(
+                      localizations.quizComplete,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
-                    child: Row(
+                    SizedBox(height: AppTheme.spacingS),
+                    Text(
+                      getGradeMessage(percentage),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Content
+              Padding(
+                padding: EdgeInsets.all(AppTheme.spacingXL),
+                child: Column(
+                  children: [
+                    // Score Display
+                    Row(
                       children: [
-                        Container(
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: Text(
-                            getGradeEmoji(percentage),
-                            style: TextStyle(fontSize: 32),
+                        Expanded(
+                          child: Container(
+                            padding: EdgeInsets.all(AppTheme.spacingM),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                              border: Border.all(
+                                color: AppTheme.primaryColor.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(Icons.stars_rounded, color: AppTheme.primaryColor),
+                                SizedBox(height: AppTheme.spacingS),
+                                Text(
+                                  "$totalScore",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                Text(
+                                  localizations.points,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         SizedBox(width: AppTheme.spacingM),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Quiz Completato!",
-                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                getGradeMessage(percentage),
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Content
-                  Padding(
-                    padding: EdgeInsets.all(AppTheme.spacingL),
-                    child: Column(
-                      children: [
-                        // Score display
-                        Container(
-                          padding: EdgeInsets.all(AppTheme.spacingL),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceColor,
-                            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                            boxShadow: AppTheme.cardShadow,
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                children: [
-                                  _buildStatItem(
-                                    "Punteggio",
-                                    "$totalScore",
-                                    "punti",
-                                    AppTheme.primaryColor,
-                                  ),
-                                  _buildStatItem(
-                                    "Precisione",
-                                    "${percentage.toInt()}",
-                                    "%",
-                                    percentage >= 70 ? AppTheme.successColor : AppTheme.errorColor,
-                                  ),
-                                  _buildStatItem(
-                                    "Corrette",
-                                    "$correctCount",
-                                    "/${questions.length}",
-                                    AppTheme.successColor,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        
-                        SizedBox(height: AppTheme.spacingL),
-                        
-                        // Questions review
-                        Container(
-                          padding: EdgeInsets.all(AppTheme.spacingM),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceColor,
-                            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                            boxShadow: AppTheme.cardShadow,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Riepilogo Risposte",
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              SizedBox(height: AppTheme.spacingM),
-                              Row(
-                                children: List.generate(questions.length, (index) {
-                                  return Container(
-                                    margin: EdgeInsets.only(right: AppTheme.spacingS),
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: correctAnswers[index] 
-                                          ? AppTheme.successColor
-                                          : AppTheme.errorColor,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        "${index + 1}",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                        ),
-                        
-                        SizedBox(height: AppTheme.spacingL),
-                        
-                        // Actions
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AnimatedButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  _resetQuiz();
-                                },
-                                backgroundColor: AppTheme.primaryColor,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.refresh, color: Colors.white),
-                                    SizedBox(width: AppTheme.spacingS),
-                                    Text(
-                                      "Ricomincia",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                          child: Container(
+                            padding: EdgeInsets.all(AppTheme.spacingM),
+                            decoration: BoxDecoration(
+                              color: (percentage >= 70 ? AppTheme.successColor : AppTheme.errorColor).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                              border: Border.all(
+                                color: (percentage >= 70 ? AppTheme.successColor : AppTheme.errorColor).withOpacity(0.3),
                               ),
                             ),
-                          ],
+                            child: Column(
+                              children: [
+                                Icon(Icons.analytics_rounded, color: percentage >= 70 ? AppTheme.successColor : AppTheme.errorColor),
+                                SizedBox(height: AppTheme.spacingS),
+                                Text(
+                                  "${percentage.toInt()}%",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: percentage >= 70 ? AppTheme.successColor : AppTheme.errorColor,
+                                  ),
+                                ),
+                                Text(
+                                  localizations.accuracy,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Confetti
-          if (percentage >= 70)
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirection: 1.5708, // Down
-                particleDrag: 0.05,
-                emissionFrequency: 0.05,
-                numberOfParticles: 50,
-                gravity: 0.05,
-                shouldLoop: false,
-                colors: [
-                  AppTheme.primaryColor,
-                  AppTheme.secondaryColor,
-                  AppTheme.accentColor,
-                  AppTheme.successColor,
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, String suffix, Color color) {
-    return Column(
-      children: [
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: value,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-              TextSpan(
-                text: suffix,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppTheme.textLight,
+                    
+                    SizedBox(height: AppTheme.spacingL),
+                    
+                    // Actions
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GradientButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              _resetQuiz();
+                            },
+                            gradient: AppTheme.primaryGradient,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.refresh_rounded, color: Colors.white),
+                                SizedBox(width: AppTheme.spacingS),
+                                Text(
+                                  localizations.retry,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: AppTheme.spacingM),
+                        Expanded(
+                          child: GradientButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              _startNewTopic();
+                            },
+                            gradient: LinearGradient(
+                              colors: [AppTheme.accentColor, AppTheme.accentLight],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.psychology_rounded, color: Colors.white),
+                                SizedBox(width: AppTheme.spacingS),
+                                Text(
+                                  localizations.newTopic,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppTheme.textLight,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -546,470 +572,614 @@ class _QuizPageState extends State<QuizPage> with TickerProviderStateMixin {
     _questionController.forward();
     _progressController.forward();
   }
+  
+  void _startNewTopic() {
+    setState(() {
+      hasQuestions = false;
+      questions.clear();
+      currentQuestion = 0;
+      totalScore = 0;
+      isAnswered = false;
+      selectedAnswer = null;
+      errorMessage = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final question = questions[currentQuestion];
-
     return Scaffold(
-      appBar: PremiumAppBar(
-        title: 'Quiz Challenge',
-        leading: Container(
-          margin: EdgeInsets.all(AppTheme.spacingS),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceColor.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(50),
-            boxShadow: AppTheme.cardShadow,
-          ),
-          child: IconButton(
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: AppTheme.primaryColor,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        actions: [
-          Container(
-            margin: EdgeInsets.all(AppTheme.spacingS),
-            padding: EdgeInsets.symmetric(
-              horizontal: AppTheme.spacingM,
-              vertical: AppTheme.spacingS,
-            ),
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-              boxShadow: AppTheme.buttonShadow,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.stars,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                SizedBox(width: AppTheme.spacingXS),
-                Text(
-                  '$totalScore',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: AppTheme.backgroundGradient,
         ),
         child: SafeArea(
-          child: AnimationLimiter(
-            child: Column(
-              children: [
-                // Progress section
-                SlideInAnimation(
-                  delay: Duration(milliseconds: 200),
-                  child: _buildProgressSection(),
-                ),
-                
-                // Question content
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(AppTheme.spacingL),
-                    child: ScaleTransition(
-                      scale: _questionAnimation,
-                      child: FadeTransition(
-                        opacity: _questionAnimation,
-                        child: Column(
-                          children: [
-                            // Question card
-                            Expanded(
-                              flex: 2,
-                              child: _buildQuestionCard(question),
-                            ),
-                            
-                            SizedBox(height: AppTheme.spacingL),
-                            
-                            // Answer options
-                            Expanded(
-                              flex: 3,
-                              child: _buildAnswerOptions(question),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: _buildBody(),
         ),
       ),
     );
   }
-
-  Widget _buildProgressSection() {
-    double progress = (currentQuestion + 1) / questions.length;
+  
+  Widget _buildBody() {
+    if (!hasQuestions && !isLoadingQuestions) {
+      return _buildPremiumTopicInputScreen();
+    } else if (isLoadingQuestions) {
+      return _buildPremiumLoadingScreen();
+    } else if (errorMessage != null) {
+      return _buildPremiumErrorScreen();
+    } else {
+      return _buildPremiumQuizScreen();
+    }
+  }
+  
+  Widget _buildPremiumTopicInputScreen() {
+    final TextEditingController topicController = TextEditingController();
+    final localizations = AppLocalizations.of(context)!;
     
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
-      child: Column(
-        children: [
-          // Question counter and category
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTheme.spacingM,
-                  vertical: AppTheme.spacingS,
-                ),
-                decoration: BoxDecoration(
-                  color: questions[currentQuestion].categoryColor?.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      questions[currentQuestion].categoryIcon,
-                      size: 16,
-                      color: questions[currentQuestion].categoryColor,
-                    ),
-                    SizedBox(width: AppTheme.spacingS),
-                    Text(
-                      questions[currentQuestion].category,
-                      style: TextStyle(
-                        color: questions[currentQuestion].categoryColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
+    return AnimationLimiter(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(AppTheme.spacingXL),
+        child: Column(
+          children: [
+            SizedBox(height: 60),
+            
+            // Premium Hero Section
+            AnimationConfiguration.staggeredList(
+              position: 0,
+              delay: Duration(milliseconds: 100),
+              child: SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: Column(
+                    children: [
+                      // Hero Icon with Glow
+                      Container(
+                        padding: EdgeInsets.all(AppTheme.spacingXL),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.heroGradient,
+                          shape: BoxShape.circle,
+                          boxShadow: AppTheme.glowShadow,
+                        ),
+                        child: Icon(
+                          Icons.psychology_rounded,
+                          size: 80,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
+                      
+                      SizedBox(height: AppTheme.spacingXL),
+                      
+                      // Premium Title with Animation
+                      PremiumShimmer(
+                        child: Text(
+                          localizations.aiQuizGenerator,
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ),
+                      
+                      SizedBox(height: AppTheme.spacingM),
+                      
+                      Text(
+                        localizations.aiQuizSubtitle,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppTheme.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTheme.spacingM,
-                  vertical: AppTheme.spacingS,
-                ),
-                decoration: BoxDecoration(
-                  color: questions[currentQuestion].difficulty.color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      questions[currentQuestion].difficulty.icon,
-                      size: 16,
-                      color: questions[currentQuestion].difficulty.color,
-                    ),
-                    SizedBox(width: AppTheme.spacingS),
-                    Text(
-                      questions[currentQuestion].difficulty.name,
+            ),
+            
+            SizedBox(height: AppTheme.spacingXXL),
+            
+            // Premium Topic Input
+            AnimationConfiguration.staggeredList(
+              position: 1,
+              delay: Duration(milliseconds: 200),
+              child: SlideAnimation(
+                verticalOffset: 30.0,
+                child: FadeInAnimation(
+                  child: GlassmorphismCard(
+                    child: TextField(
+                      controller: topicController,
                       style: TextStyle(
-                        color: questions[currentQuestion].difficulty.color,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 16,
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: localizations.topicInputHint,
+                        hintStyle: TextStyle(
+                          color: AppTheme.textLight,
+                        ),
+                        prefixIcon: Container(
+                          margin: EdgeInsets.all(AppTheme.spacingS),
+                          padding: EdgeInsets.all(AppTheme.spacingS),
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
+                            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                          ),
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(AppTheme.spacingL),
+                      ),
+                      onSubmitted: (topic) {
+                        if (topic.trim().isNotEmpty) {
+                          _generateQuestionsForTopic(topic.trim());
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            
+            SizedBox(height: AppTheme.spacingXL),
+            
+            // Premium Generate Button
+            AnimationConfiguration.staggeredList(
+              position: 2,
+              delay: Duration(milliseconds: 300),
+              child: SlideAnimation(
+                verticalOffset: 30.0,
+                child: FadeInAnimation(
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: PremiumAnimatedButton(
+                      onPressed: () {
+                        if (topicController.text.trim().isNotEmpty) {
+                          _generateQuestionsForTopic(topicController.text.trim());
+                        }
+                      },
+                      gradient: AppTheme.primaryGradient,
+                      glowEffect: true,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.auto_awesome_rounded, size: 24, color: Colors.white),
+                          SizedBox(width: AppTheme.spacingM),
+                          Text(
+                            localizations.generateQuizQuestions,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
+              ),
+            ),
+            
+            SizedBox(height: AppTheme.spacingXXL),
+            
+            // Popular Topics
+            AnimationConfiguration.staggeredList(
+              position: 3,
+              delay: Duration(milliseconds: 400),
+              child: SlideAnimation(
+                verticalOffset: 30.0,
+                child: FadeInAnimation(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        localizations.popularTopics,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: AppTheme.spacingL),
+                      Wrap(
+                        spacing: AppTheme.spacingM,
+                        runSpacing: AppTheme.spacingM,
+                        children: [
+                          'Mathematics',
+                          'Physics',
+                          'History',
+                          'Biology',
+                          'Computer Science',
+                          'Literature',
+                          'Chemistry',
+                          'Psychology',
+                        ].map((topic) {
+                          return PremiumAnimatedButton(
+                            onPressed: () {
+                              topicController.text = topic;
+                              _generateQuestionsForTopic(topic);
+                            },
+                            backgroundColor: AppTheme.surfaceColor,
+                            borderRadius: BorderRadius.circular(AppTheme.radiusRound),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppTheme.spacingL,
+                              vertical: AppTheme.spacingM,
+                            ),
+                            child: Text(
+                              topic,
+                              style: TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildPremiumLoadingScreen() {
+    final localizations = AppLocalizations.of(context)!;
+    
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Premium Loading Animation
+          PulsingWidget(
+            child: Container(
+              padding: EdgeInsets.all(AppTheme.spacingXXL),
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                shape: BoxShape.circle,
+                boxShadow: AppTheme.glowShadow,
+              ),
+              child: PremiumLoadingSpinner(
+                size: 60,
+                color: Colors.white,
+                strokeWidth: 4,
+              ),
+            ),
+          ),
+          
+          SizedBox(height: AppTheme.spacingXXL),
+          
+          // Animated Text
+          AnimatedTextKit(
+            animatedTexts: [
+              TypewriterAnimatedText(
+                localizations.generatingQuestions,
+                textStyle: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+                speed: Duration(milliseconds: 100),
               ),
             ],
+            isRepeatingAnimation: true,
+            repeatForever: true,
           ),
           
-          SizedBox(height: AppTheme.spacingM),
-          
-          // Progress bar
-          Container(
-            padding: EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceColor,
-              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-              boxShadow: AppTheme.cardShadow,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-              child: AnimatedBuilder(
-                animation: _progressAnimation,
-                builder: (context, child) {
-                  return LinearProgressIndicator(
-                    value: progress * _progressAnimation.value,
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-                    minHeight: 8,
-                  );
-                },
-              ),
-            ),
-          ),
-          
-          SizedBox(height: AppTheme.spacingS),
+          SizedBox(height: AppTheme.spacingL),
           
           Text(
-            "Domanda ${currentQuestion + 1} di ${questions.length}",
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
+            localizations.aiCraftingMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: AppTheme.textSecondary,
+              height: 1.4,
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildQuestionCard(Question question) {
-    return Stack(
-      children: [
-        // Background particle system for correct answers
-        if (isAnswered && selectedAnswer == question.correctAnswerIndex)
-          Positioned.fill(
-            child: ParticleSystem(
-              isActive: true,
-              color: AppTheme.successColor,
-              particleCount: 20,
-              maxSize: 6,
-            ),
-          ),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(AppTheme.spacingXL),
-          decoration: BoxDecoration(
-            gradient: isAnswered
-                ? (selectedAnswer == question.correctAnswerIndex
-                    ? LinearGradient(
-                        colors: [AppTheme.successColor.withOpacity(0.1), Colors.white],
-                      )
-                    : LinearGradient(
-                        colors: [AppTheme.errorColor.withOpacity(0.1), Colors.white],
-                      ))
-                : null,
-            color: isAnswered ? null : AppTheme.surfaceColor,
-            borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-            boxShadow: [
-              BoxShadow(
-                color: isAnswered
-                    ? (selectedAnswer == question.correctAnswerIndex
-                        ? AppTheme.successColor.withOpacity(0.3)
-                        : AppTheme.errorColor.withOpacity(0.3))
-                    : Colors.black.withOpacity(0.08),
-                blurRadius: 20,
-                offset: Offset(0, 10),
-              ),
-            ],
-          ),
+  
+  Widget _buildPremiumErrorScreen() {
+    final localizations = AppLocalizations.of(context)!;
+    
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppTheme.spacingXL),
+        child: GlassmorphismCard(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Category and difficulty badges
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppTheme.spacingM,
-                      vertical: AppTheme.spacingS,
-                    ),
-                    decoration: BoxDecoration(
-                      color: question.categoryColor?.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          question.categoryIcon,
-                          size: 16,
-                          color: question.categoryColor,
-                        ),
-                        SizedBox(width: AppTheme.spacingS),
-                        Text(
-                          question.category,
-                          style: TextStyle(
-                            color: question.categoryColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PulsingButton(
-                    onPressed: null,
-                    glowColor: AppTheme.primaryColor,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppTheme.spacingM,
-                        vertical: AppTheme.spacingS,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.primaryGradient,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            question.difficulty.icon,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: AppTheme.spacingXS),
-                          AnimatedCounter(
-                            value: question.points,
-                            textStyle: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            ' pts',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              // Error Icon
+              Container(
+                padding: EdgeInsets.all(AppTheme.spacingL),
+                decoration: BoxDecoration(
+                  color: AppTheme.errorColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.error_outline_rounded,
+                  size: 60,
+                  color: AppTheme.errorColor,
+                ),
               ),
               
               SizedBox(height: AppTheme.spacingXL),
               
-              // Question text with shimmer effect
-              Shimmer.fromColors(
-                baseColor: AppTheme.textPrimary,
-                highlightColor: AppTheme.primaryColor.withOpacity(0.3),
-                period: Duration(seconds: 3),
-                child: AnimatedTextKit(
-                  animatedTexts: [
-                    FadeAnimatedText(
-                      question.text,
-                      textStyle: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              Text(
+                localizations.somethingWentWrong,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              
+              SizedBox(height: AppTheme.spacingM),
+              
+              Text(
+                errorMessage ?? localizations.failedGenerateQuestions,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              
+              SizedBox(height: AppTheme.spacingXXL),
+              
+              GradientButton(
+                onPressed: () {
+                  setState(() {
+                    errorMessage = null;
+                    hasQuestions = false;
+                  });
+                },
+                gradient: AppTheme.primaryGradient,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.refresh_rounded, color: Colors.white),
+                    SizedBox(width: AppTheme.spacingS),
+                    Text(
+                      localizations.tryAgain,
+                      style: TextStyle(
+                        color: Colors.white,
                         fontWeight: FontWeight.w600,
-                        height: 1.4,
-                      ) ?? TextStyle(),
-                      textAlign: TextAlign.center,
-                      duration: Duration(milliseconds: 1500),
+                      ),
                     ),
                   ],
-                  isRepeatingAnimation: false,
                 ),
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
+  
+  Widget _buildPremiumQuizScreen() {
+    if (questions.isEmpty) return Container();
+    
+    final question = questions[currentQuestion];
+    final localizations = AppLocalizations.of(context)!;
 
-  Widget _buildAnswerOptions(Question question) {
-    return AnimationLimiter(
-      child: ListView.builder(
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: question.options.length,
-        itemBuilder: (context, index) {
-          bool isSelected = selectedAnswer == index;
-          bool isCorrect = index == question.correctAnswerIndex;
-          bool showResult = isAnswered;
-          
-          Color getButtonColor() {
-            if (!showResult) {
-              return isSelected ? AppTheme.primaryColor : AppTheme.surfaceColor;
-            }
-            if (isCorrect) return AppTheme.successColor;
-            if (isSelected && !isCorrect) return AppTheme.errorColor;
-            return AppTheme.surfaceColor.withOpacity(0.6);
-          }
-          
-          Color getTextColor() {
-            if (!showResult) {
-              return isSelected ? Colors.white : AppTheme.textPrimary;
-            }
-            if (isCorrect || (isSelected && !isCorrect)) return Colors.white;
-            return AppTheme.textLight;
-          }
-          
-          return AnimationConfiguration.staggeredList(
-            position: index,
-            delay: Duration(milliseconds: 100),
-            child: SlideAnimation(
-              verticalOffset: 50.0,
-              child: FadeInAnimation(
-                child: Container(
-                  margin: EdgeInsets.only(bottom: AppTheme.spacingM),
-                  child: AnimatedButton(
-                    onPressed: isAnswered ? null : () => _selectAnswer(index),
-                    backgroundColor: getButtonColor(),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    hapticFeedback: !isAnswered,
-                    child: Container(
-                      padding: EdgeInsets.all(AppTheme.spacingM),
-                      child: Row(
-                        children: [
-                          // Option letter
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
+    return Column(
+      children: [
+        // Premium Progress Header
+        Container(
+          padding: EdgeInsets.all(AppTheme.spacingL),
+          child: Column(
+            children: [
+              // Progress Bar
+              PremiumProgressIndicator(
+                value: (currentQuestion + 1) / questions.length,
+                showPercentage: true,
+                height: 8,
+              ),
+              
+              SizedBox(height: AppTheme.spacingM),
+              
+              // Question Counter & Category
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  PremiumBadge(
+                    text: "${currentQuestion + 1} ${localizations.outOf} ${questions.length}",
+                    backgroundColor: AppTheme.primaryColor,
+                    icon: Icon(Icons.quiz_rounded, size: 16, color: Colors.white),
+                  ),
+                  PremiumBadge(
+                    text: question.category,
+                    backgroundColor: question.categoryColor,
+                    icon: Icon(question.categoryIcon, size: 16, color: Colors.white),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+        // Question Content
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.all(AppTheme.spacingL),
+            child: AnimatedBuilder(
+              animation: _questionAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _questionAnimation.value,
+                  child: Opacity(
+                    opacity: _questionAnimation.value,
+                    child: Column(
+                      children: [
+                        // Premium Question Card
+                        Expanded(
+                          flex: 2,
+                          child: GlassmorphismCard(
                             child: Center(
-                              child: Text(
-                                String.fromCharCode(65 + index), // A, B, C, D
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Difficulty Badge
+                                  PremiumBadge(
+                                    text: question.difficulty.name.toUpperCase(),
+                                    backgroundColor: question.difficulty.color,
+                                    glow: true,
+                                  ),
+                                  
+                                  SizedBox(height: AppTheme.spacingL),
+                                  
+                                  // Question Text with Premium Animation
+                                  PremiumShimmer(
+                                    enabled: !isAnswered,
+                                    child: Text(
+                                      question.text,
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textPrimary,
+                                        height: 1.4,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          
-                          SizedBox(width: AppTheme.spacingM),
-                          
-                          // Option text
-                          Expanded(
-                            child: Text(
-                              question.options[index],
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: getTextColor(),
-                              ),
+                        ),
+                        
+                        SizedBox(height: AppTheme.spacingL),
+                        
+                        // Premium Answer Options
+                        Expanded(
+                          flex: 3,
+                          child: AnimationLimiter(
+                            child: ListView.builder(
+                              itemCount: question.options.length,
+                              itemBuilder: (context, index) {
+                                bool isSelected = selectedAnswer == index;
+                                bool isCorrect = index == question.correctAnswerIndex;
+                                bool showResult = isAnswered;
+                                
+                                Color getBackgroundColor() {
+                                  if (!showResult) {
+                                    return isSelected ? AppTheme.primaryColor : AppTheme.surfaceColor;
+                                  }
+                                  if (isCorrect) return AppTheme.successColor;
+                                  if (isSelected && !isCorrect) return AppTheme.errorColor;
+                                  return AppTheme.surfaceSecondary;
+                                }
+                                
+                                Color getTextColor() {
+                                  if (!showResult) {
+                                    return isSelected ? Colors.white : AppTheme.textPrimary;
+                                  }
+                                  if (isCorrect || (isSelected && !isCorrect)) return Colors.white;
+                                  return AppTheme.textLight;
+                                }
+                                
+                                return AnimationConfiguration.staggeredList(
+                                  position: index,
+                                  delay: Duration(milliseconds: 100),
+                                  child: SlideAnimation(
+                                    verticalOffset: 30.0,
+                                    child: FadeInAnimation(
+                                      child: Container(
+                                        margin: EdgeInsets.only(bottom: AppTheme.spacingM),
+                                        child: PremiumAnimatedButton(
+                                          onPressed: isAnswered ? null : () => _selectAnswer(index),
+                                          backgroundColor: getBackgroundColor(),
+                                          padding: EdgeInsets.all(AppTheme.spacingL),
+                                          boxShadow: showResult && (isCorrect || isSelected) 
+                                              ? AppTheme.elevatedShadow 
+                                              : AppTheme.cardShadow,
+                                          child: Row(
+                                            children: [
+                                              // Option Letter
+                                              Container(
+                                                width: 40,
+                                                height: 40,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withOpacity(0.2),
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    String.fromCharCode(65 + index),
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.w700,
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              
+                                              SizedBox(width: AppTheme.spacingM),
+                                              
+                                              // Option Text
+                                              Expanded(
+                                                child: Text(
+                                                  question.options[index],
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: getTextColor(),
+                                                  ),
+                                                ),
+                                              ),
+                                              
+                                              // Result Icon
+                                              if (showResult && (isCorrect || isSelected))
+                                                Container(
+                                                  padding: EdgeInsets.all(AppTheme.spacingS),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white.withOpacity(0.2),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    isCorrect ? Icons.check_rounded : Icons.close_rounded,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                          
-                          // Result icon
-                          if (showResult && (isCorrect || isSelected))
-                            Icon(
-                              isCorrect ? Icons.check_circle : Icons.cancel,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 }
