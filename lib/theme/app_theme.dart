@@ -15,18 +15,31 @@ class AppTheme {
   static const Color accentLight = Color(0xFFF472B6);
   static const Color accentDark = Color(0xFFBE185D);
   
-  // Neural backgrounds
+  // Light theme colors
   static const Color backgroundColor = Color(0xFFF8FAFC);
   static const Color surfaceColor = Color(0xFFFFFFFF);
   static const Color surfaceSecondary = Color(0xFFF1F5F9);
   static const Color surfaceTertiary = Color(0xFFE2E8F0);
   
-  // Advanced text hierarchy
+  // Dark theme colors
+  static const Color darkBackgroundColor = Color(0xFF0F172A);
+  static const Color darkSurfaceColor = Color(0xFF1E293B);
+  static const Color darkSurfaceSecondary = Color(0xFF334155);
+  static const Color darkSurfaceTertiary = Color(0xFF475569);
+  
+  // Text colors for light theme
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF334155);
   static const Color textTertiary = Color(0xFF64748B);
   static const Color textLight = Color(0xFF94A3B8);
   static const Color textMuted = Color(0xFFCBD5E1);
+  
+  // Text colors for dark theme
+  static const Color darkTextPrimary = Color(0xFFE2E8F0);
+  static const Color darkTextSecondary = Color(0xFFCBD5E1);
+  static const Color darkTextTertiary = Color(0xFF94A3B8);
+  static const Color darkTextLight = Color(0xFF64748B);
+  static const Color darkTextMuted = Color(0xFF475569);
   
   // Premium status colors
   static const Color successColor = Color(0xFF059669);
@@ -78,10 +91,22 @@ class AppTheme {
     colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
   );
   
+  static const LinearGradient darkBackgroundGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [darkBackgroundColor, Color(0xFF1E293B)],
+  );
+  
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Colors.white, Color(0xFFF8FAFC)],
+  );
+  
+  static const LinearGradient darkCardGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [darkSurfaceColor, Color(0xFF1E293B)],
   );
   
   static const LinearGradient successGradient = LinearGradient(
@@ -153,6 +178,20 @@ class AppTheme {
       blurRadius: 30,
       offset: Offset(0, 0),
       spreadRadius: -5,
+    ),
+  ];
+  
+  // Dark theme shadows (lighter for dark mode)
+  static const List<BoxShadow> darkCardShadow = [
+    BoxShadow(
+      color: Color(0x1A000000),
+      blurRadius: 20,
+      offset: Offset(0, 8),
+    ),
+    BoxShadow(
+      color: Color(0x0F000000),
+      blurRadius: 40,
+      offset: Offset(0, 16),
     ),
   ];
   
@@ -265,6 +304,113 @@ class AppTheme {
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMedium),
         borderSide: BorderSide(color: surfaceTertiary),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMedium),
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      contentPadding: EdgeInsets.symmetric(horizontal: spacingM, vertical: spacingM),
+    ),
+  );
+  
+  // Dark theme data
+  static ThemeData get darkTheme => ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.dark,
+      surface: darkSurfaceColor,
+      onSurface: darkTextPrimary,
+    ),
+    scaffoldBackgroundColor: darkBackgroundColor,
+    textTheme: GoogleFonts.interTextTheme().copyWith(
+      displayLarge: GoogleFonts.inter(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: darkTextPrimary,
+        letterSpacing: -0.5,
+      ),
+      displayMedium: GoogleFonts.inter(
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
+        color: darkTextPrimary,
+        letterSpacing: -0.25,
+      ),
+      headlineLarge: GoogleFonts.inter(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        color: darkTextPrimary,
+      ),
+      headlineMedium: GoogleFonts.inter(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: darkTextPrimary,
+      ),
+      titleLarge: GoogleFonts.inter(
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+        color: darkTextPrimary,
+      ),
+      bodyLarge: GoogleFonts.inter(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: darkTextSecondary,
+        height: 1.5,
+      ),
+      bodyMedium: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: darkTextSecondary,
+        height: 1.4,
+      ),
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: true,
+      titleTextStyle: GoogleFonts.inter(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: darkTextPrimary,
+      ),
+      iconTheme: IconThemeData(color: darkTextPrimary),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMedium),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: spacingL, vertical: spacingM),
+        textStyle: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      color: darkSurfaceColor,
+      shadowColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(radiusLarge),
+      ),
+      margin: EdgeInsets.zero,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: darkSurfaceColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMedium),
+        borderSide: BorderSide(color: darkSurfaceTertiary),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMedium),
+        borderSide: BorderSide(color: darkSurfaceTertiary),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMedium),

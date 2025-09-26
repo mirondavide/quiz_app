@@ -58,6 +58,16 @@ dependencies:
   
   # HTTP requests for AI API
   http: ^1.1.0
+  
+  # File handling
+  file_picker: ^8.0.3
+  image_picker: ^1.0.4
+  
+  # Document processing
+  path_provider: ^2.1.1
+  
+  # Additional UI components
+  loading_animation_widget: ^1.2.0+4
 
 dev_dependencies:
   flutter_test:
