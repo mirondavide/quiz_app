@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../providers/settings_provider.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../providers/settings_provider.dart';
+import '../services/ai_service.dart';
 
 class APIConfigPage extends StatefulWidget {
   const APIConfigPage({super.key});
@@ -11,322 +14,649 @@ class APIConfigPage extends StatefulWidget {
   State<APIConfigPage> createState() => _APIConfigPageState();
 }
 
-class _APIConfigPageState extends State<APIConfigPage> {
+class _APIConfigPageState extends State<APIConfigPage>
+    with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
   final TextEditingController _apiKeyController = TextEditingController();
+  final TextEditingController _apiUrlController = TextEditingController();
+  final TextEditingController _modelController = TextEditingController();
+
+  final AIService _aiService = AIService();
+
   bool _isLoading = false;
-  bool _isObscured = true;
+  bool _isTesting = false;
+  String? _successMessage;
+  String? _errorMessage;
+  bool _obscureApiKey = true;
+
+  // Available models
+  final List<String> _availableModels = [
+    'gpt-3.5-turbo',
+    'gpt-4',
+    'gpt-4-turbo',
+    'gpt-4o',
+    'gpt-4o-mini',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _loadAPIKey();
+    _setupAnimations();
+    _loadSettings();
+    _startAnimations();
   }
 
-  Future<void> _loadAPIKey() async {
+  void _setupAnimations() {
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+    ));
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.2, 0.8, curve: Curves.easeOutCubic),
+    ));
+  }
+
+  void _startAnimations() {
+    _animationController.forward();
+  }
+
+  Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final apiKey = prefs.getString('openai_api_key') ?? '';
-    if (apiKey.isNotEmpty) {
-      _apiKeyController.text = apiKey;
-    }
+    setState(() {
+      _apiKeyController.text = prefs.getString('ai_api_key') ?? '';
+      _apiUrlController.text = prefs.getString('ai_api_url') ?? '';
+      _modelController.text = prefs.getString('ai_model') ?? 'gpt-3.5-turbo';
+    });
   }
 
-  Future<void> _saveAPIKey() async {
-    if (_apiKeyController.text.trim().isEmpty) {
-      _showMessage('Please enter an API key', isError: true);
+  Future<void> _saveSettings() async {
+    final apiKey = _apiKeyController.text.trim();
+    if (apiKey.isEmpty) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.apiKeyRequired;
+        _successMessage = null;
+      });
       return;
     }
 
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
+      _successMessage = null;
     });
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('openai_api_key', _apiKeyController.text.trim());
-      
-      if (mounted) {
-        _showMessage('API key saved successfully!', isError: false);
-        Navigator.pop(context);
-      }
+      await prefs.setString('ai_api_key', apiKey);
+      await prefs.setString('ai_api_url', _apiUrlController.text.trim());
+      await prefs.setString('ai_model', _modelController.text.trim());
+
+      // Configure AI service
+      _aiService.configure(
+        apiKey: apiKey,
+        apiUrl: _apiUrlController.text.trim().isNotEmpty
+            ? _apiUrlController.text.trim()
+            : null,
+        model: _modelController.text.trim().isNotEmpty
+            ? _modelController.text.trim()
+            : null,
+      );
+
+      setState(() {
+        _successMessage = AppLocalizations.of(context)!.settingsSaved;
+        _isLoading = false;
+      });
+
+      _triggerHaptic();
     } catch (e) {
-      _showMessage('Failed to save API key', isError: true);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _errorMessage = 'Failed to save settings: $e';
+        _isLoading = false;
+      });
     }
   }
 
-  void _showMessage(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppTheme.errorColor : AppTheme.successColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+  Future<void> _testConnection() async {
+    final apiKey = _apiKeyController.text.trim();
+    if (apiKey.isEmpty) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.apiKeyRequired;
+        _successMessage = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isTesting = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
+    try {
+      // Configure AI service temporarily for testing
+      _aiService.configure(
+        apiKey: apiKey,
+        apiUrl: _apiUrlController.text.trim().isNotEmpty
+            ? _apiUrlController.text.trim()
+            : null,
+        model: _modelController.text.trim().isNotEmpty
+            ? _modelController.text.trim()
+            : null,
+      );
+
+      final success = await _aiService.testConnection();
+      
+      setState(() {
+        if (success) {
+          _successMessage = AppLocalizations.of(context)!.connectionSuccessful;
+        } else {
+          _errorMessage = AppLocalizations.of(context)!.connectionFailed;
+        }
+        _isTesting = false;
+      });
+
+      _triggerHaptic();
+    } catch (e) {
+      setState(() {
+        _errorMessage = AppLocalizations.of(context)!.connectionFailed;
+        _isTesting = false;
+      });
+    }
+  }
+
+  void _triggerHaptic() {
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
+    if (settings.hapticEnabled) {
+      HapticFeedback.lightImpact();
+    }
   }
 
   @override
   void dispose() {
+    _animationController.dispose();
     _apiKeyController.dispose();
+    _apiUrlController.dispose();
+    _modelController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<SettingsProvider>(
-      builder: (context, settings, child) {
-        final isDark = settings.isDarkMode;
-        return Scaffold(
-          backgroundColor: isDark ? const Color(0xFF0A0E27) : Colors.grey[50],
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.arrow_back_ios_new,
-                  color: isDark ? Colors.white : Colors.black87,
-                  size: 18,
+    final localizations = AppLocalizations.of(context)!;
+
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppTheme.backgroundGradient,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              _buildHeader(localizations),
+              
+              // Content
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: _buildContent(localizations),
+                      ),
+                    );
+                  },
                 ),
               ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: Text(
-              'AI Configuration',
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-              ),
-            ),
-            centerTitle: true,
+            ],
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(AppLocalizations localizations) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: AppTheme.textPrimary,
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.api,
-                          size: 40,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'OpenAI API Configuration',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Enter your OpenAI API key to enable AI-powered question generation',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark ? Colors.white70 : Colors.grey[600],
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
+                Text(
+                  localizations.apiConfiguration,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
-                
-                const SizedBox(height: 32),
-                
-                // API Key Input
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'OpenAI API Key',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.3),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: _apiKeyController,
-                        obscureText: _isObscured,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'sk-...',
-                          hintStyle: TextStyle(
-                            color: isDark ? Colors.white.withOpacity(0.4) : Colors.grey[500],
-                          ),
-                          prefixIcon: Icon(
-                            Icons.key,
-                            color: AppTheme.primaryColor,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isObscured ? Icons.visibility_off : Icons.visibility,
-                              color: isDark ? Colors.white.withOpacity(0.6) : Colors.grey[400],
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isObscured = !_isObscured;
-                              });
-                            },
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.all(20),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Info Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppTheme.primaryColor.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: AppTheme.primaryColor,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'How to get your API key:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '1. Visit platform.openai.com\n'
-                        '2. Sign up or log in to your account\n'
-                        '3. Go to API section\n'
-                        '4. Generate a new API key\n'
-                        '5. Copy and paste it here',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDark ? Colors.white70 : Colors.grey[700],
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 40),
-                
-                // Save Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _saveAPIKey,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 8,
-                      shadowColor: AppTheme.primaryColor.withOpacity(0.4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.save, size: 24),
-                              SizedBox(width: 12),
-                              Text(
-                                'Save API Key',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+                Text(
+                  localizations.configureAI,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent(AppLocalizations localizations) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Info card
+          _buildInfoCard(localizations),
+          
+          const SizedBox(height: 24),
+          
+          // API Key field
+          _buildInputField(
+            label: localizations.apiKey,
+            hint: localizations.enterApiKey,
+            controller: _apiKeyController,
+            obscureText: _obscureApiKey,
+            suffixIcon: IconButton(
+              onPressed: () {
+                setState(() {
+                  _obscureApiKey = !_obscureApiKey;
+                });
+              },
+              icon: Icon(
+                _obscureApiKey ? Icons.visibility : Icons.visibility_off,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // API URL field
+          _buildInputField(
+            label: localizations.apiUrl,
+            hint: localizations.customApiUrl,
+            controller: _apiUrlController,
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Model selector
+          _buildModelSelector(localizations),
+          
+          const SizedBox(height: 32),
+          
+          // Action buttons
+          _buildActionButtons(localizations),
+          
+          const SizedBox(height: 24),
+          
+          // Status messages
+          if (_successMessage != null) _buildSuccessMessage(_successMessage!),
+          if (_errorMessage != null) _buildErrorMessage(_errorMessage!),
+          
+          const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(AppLocalizations localizations) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.info_outline_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'API Configuration',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'To use AI features, you need to configure your OpenAI API key. You can get one from https://platform.openai.com/api-keys',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.9),
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    bool obscureText = false,
+    Widget? suffixIcon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: AppTheme.textSecondary.withOpacity(0.7),
+            ),
+            suffixIcon: suffixIcon,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppTheme.primaryColor,
+                width: 2,
+              ),
+            ),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.1),
+            contentPadding: const EdgeInsets.all(16),
+          ),
+          style: const TextStyle(
+            fontSize: 16,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModelSelector(AppLocalizations localizations) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          localizations.model,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.primaryColor.withOpacity(0.3),
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _modelController.text.isEmpty ? _availableModels.first : _modelController.text,
+              hint: Text(localizations.selectModel),
+              isExpanded: true,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppTheme.textPrimary,
+              ),
+              dropdownColor: Colors.white,
+              items: _availableModels.map((model) {
+                return DropdownMenuItem<String>(
+                  value: model,
+                  child: Text(model),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _modelController.text = value;
+                  });
+                }
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(AppLocalizations localizations) {
+    return Column(
+      children: [
+        // Test Connection button
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isTesting ? null : _testConnection,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.infoColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+            ),
+            child: _isTesting
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(localizations.testConnection),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.wifi_tethering_rounded),
+                      const SizedBox(width: 8),
+                      Text(localizations.testConnection),
+                    ],
+                  ),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Save button
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _saveSettings,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 8,
+              shadowColor: AppTheme.primaryColor.withOpacity(0.4),
+            ),
+            child: _isLoading
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(localizations.save),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.save_rounded),
+                      const SizedBox(width: 8),
+                      Text(localizations.save),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSuccessMessage(String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.successColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.successColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.check_circle_outline_rounded,
+            color: AppTheme.successColor,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.successColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage(String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.errorColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.errorColor.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            color: AppTheme.errorColor,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.errorColor,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

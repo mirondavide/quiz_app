@@ -619,6 +619,354 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Learn more about the app'**
   String get appInfo;
+
+  /// AI Assistant title
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assistant'**
+  String get aiAssistant;
+
+  /// Upload or ask anything subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Upload files or ask me anything'**
+  String get uploadOrAskAnything;
+
+  /// Start AI button
+  ///
+  /// In en, this message translates to:
+  /// **'Start AI Chat'**
+  String get startAI;
+
+  /// Upload or type description
+  ///
+  /// In en, this message translates to:
+  /// **'Upload files or type questions'**
+  String get uploadOrType;
+
+  /// Legacy quiz description
+  ///
+  /// In en, this message translates to:
+  /// **'Traditional quiz mode'**
+  String get legacyQuiz;
+
+  /// AI Chat tab
+  ///
+  /// In en, this message translates to:
+  /// **'AI Chat'**
+  String get aiChat;
+
+  /// Choose input method
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Input Method'**
+  String get chooseInputMethod;
+
+  /// Select how to provide content
+  ///
+  /// In en, this message translates to:
+  /// **'Select how you want to provide content'**
+  String get selectHowToProvideContent;
+
+  /// Upload file option
+  ///
+  /// In en, this message translates to:
+  /// **'Upload File'**
+  String get uploadFile;
+
+  /// Upload file description
+  ///
+  /// In en, this message translates to:
+  /// **'Upload PDF, DOCX, or images'**
+  String get uploadFileDescription;
+
+  /// Type topic option
+  ///
+  /// In en, this message translates to:
+  /// **'Type Topic'**
+  String get typeTopic;
+
+  /// Type topic description
+  ///
+  /// In en, this message translates to:
+  /// **'Enter any question or topic'**
+  String get typeTopicDescription;
+
+  /// Supported formats
+  ///
+  /// In en, this message translates to:
+  /// **'Supported Formats'**
+  String get supportedFormats;
+
+  /// Supported formats description
+  ///
+  /// In en, this message translates to:
+  /// **'PDF, DOCX, DOC, TXT, JPG, PNG, and more'**
+  String get supportedFormatsDescription;
+
+  /// Select file to analyze
+  ///
+  /// In en, this message translates to:
+  /// **'Select a file to analyze with AI'**
+  String get selectFileToAnalyze;
+
+  /// Tap to upload
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to Upload File'**
+  String get tapToUpload;
+
+  /// Or choose option
+  ///
+  /// In en, this message translates to:
+  /// **'Or choose an option below'**
+  String get orChooseOption;
+
+  /// Gallery option
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
+  /// Camera option
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// Send to AI
+  ///
+  /// In en, this message translates to:
+  /// **'Send to AI'**
+  String get sendToAI;
+
+  /// Processing
+  ///
+  /// In en, this message translates to:
+  /// **'Processing...'**
+  String get processing;
+
+  /// File not supported
+  ///
+  /// In en, this message translates to:
+  /// **'File format not supported'**
+  String get fileNotSupported;
+
+  /// File pick error
+  ///
+  /// In en, this message translates to:
+  /// **'Error picking file'**
+  String get filePickError;
+
+  /// Image pick error
+  ///
+  /// In en, this message translates to:
+  /// **'Error picking image'**
+  String get imagePickError;
+
+  /// Camera error
+  ///
+  /// In en, this message translates to:
+  /// **'Error accessing camera'**
+  String get cameraError;
+
+  /// Processing error
+  ///
+  /// In en, this message translates to:
+  /// **'Error processing request'**
+  String get processingError;
+
+  /// Enter topic description
+  ///
+  /// In en, this message translates to:
+  /// **'Enter any topic or question to get AI insights'**
+  String get enterTopicDescription;
+
+  /// Your topic
+  ///
+  /// In en, this message translates to:
+  /// **'Your Topic'**
+  String get yourTopic;
+
+  /// Enter topic hint
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Explain quantum computing, summarize this concept...'**
+  String get enterTopicHint;
+
+  /// Suggested topics
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested Topics'**
+  String get suggestedTopics;
+
+  /// Ask AI
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get askAI;
+
+  /// Please enter topic
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a topic or question'**
+  String get pleaseEnterTopic;
+
+  /// Preparing response
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing Response'**
+  String get preparingResponse;
+
+  /// Processing input
+  ///
+  /// In en, this message translates to:
+  /// **'Processing your input with AI...'**
+  String get processingInput;
+
+  /// Error occurred
+  ///
+  /// In en, this message translates to:
+  /// **'An Error Occurred'**
+  String get errorOccurred;
+
+  /// Unknown error
+  ///
+  /// In en, this message translates to:
+  /// **'An unknown error occurred'**
+  String get unknownError;
+
+  /// Go back
+  ///
+  /// In en, this message translates to:
+  /// **'Go Back'**
+  String get goBack;
+
+  /// Ready to help
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to help'**
+  String get readyToHelp;
+
+  /// Typing
+  ///
+  /// In en, this message translates to:
+  /// **'Typing...'**
+  String get typing;
+
+  /// Just now
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get justNow;
+
+  /// Ask follow up
+  ///
+  /// In en, this message translates to:
+  /// **'Ask a follow-up question...'**
+  String get askFollowUp;
+
+  /// API Configuration
+  ///
+  /// In en, this message translates to:
+  /// **'API Configuration'**
+  String get apiConfiguration;
+
+  /// Configure AI
+  ///
+  /// In en, this message translates to:
+  /// **'Configure AI settings'**
+  String get configureAI;
+
+  /// API Key
+  ///
+  /// In en, this message translates to:
+  /// **'API Key'**
+  String get apiKey;
+
+  /// Enter API key
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your OpenAI API key'**
+  String get enterApiKey;
+
+  /// API URL
+  ///
+  /// In en, this message translates to:
+  /// **'API URL'**
+  String get apiUrl;
+
+  /// Custom API URL
+  ///
+  /// In en, this message translates to:
+  /// **'Custom API URL (optional)'**
+  String get customApiUrl;
+
+  /// Model
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get model;
+
+  /// Select model
+  ///
+  /// In en, this message translates to:
+  /// **'Select AI model'**
+  String get selectModel;
+
+  /// Test connection
+  ///
+  /// In en, this message translates to:
+  /// **'Test Connection'**
+  String get testConnection;
+
+  /// Save
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// Connection successful
+  ///
+  /// In en, this message translates to:
+  /// **'Connection successful!'**
+  String get connectionSuccessful;
+
+  /// Connection failed
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed'**
+  String get connectionFailed;
+
+  /// API key required
+  ///
+  /// In en, this message translates to:
+  /// **'API key is required'**
+  String get apiKeyRequired;
+
+  /// Invalid API key
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid API key format'**
+  String get invalidApiKey;
+
+  /// Settings saved
+  ///
+  /// In en, this message translates to:
+  /// **'Settings saved successfully'**
+  String get settingsSaved;
+
+  /// AI not configured
+  ///
+  /// In en, this message translates to:
+  /// **'AI not configured. Please set your API key in settings.'**
+  String get aiNotConfigured;
+
+  /// Configure now
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Now'**
+  String get configureNow;
 }
 
 class _AppLocalizationsDelegate

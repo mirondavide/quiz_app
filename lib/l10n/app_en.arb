@@ -332,5 +332,237 @@
   "appInfo": "Learn more about the app",
   "@appInfo": {
     "description": "App info description"
+  },
+  "aiAssistant": "AI Assistant",
+  "@aiAssistant": {
+    "description": "AI Assistant title"
+  },
+  "uploadOrAskAnything": "Upload files or ask me anything",
+  "@uploadOrAskAnything": {
+    "description": "Upload or ask anything subtitle"
+  },
+  "startAI": "Start AI Chat",
+  "@startAI": {
+    "description": "Start AI button"
+  },
+  "uploadOrType": "Upload files or type questions",
+  "@uploadOrType": {
+    "description": "Upload or type description"
+  },
+  "legacyQuiz": "Traditional quiz mode",
+  "@legacyQuiz": {
+    "description": "Legacy quiz description"
+  },
+  "aiChat": "AI Chat",
+  "@aiChat": {
+    "description": "AI Chat tab"
+  },
+  "chooseInputMethod": "Choose Input Method",
+  "@chooseInputMethod": {
+    "description": "Choose input method"
+  },
+  "selectHowToProvideContent": "Select how you want to provide content",
+  "@selectHowToProvideContent": {
+    "description": "Select how to provide content"
+  },
+  "uploadFile": "Upload File",
+  "@uploadFile": {
+    "description": "Upload file option"
+  },
+  "uploadFileDescription": "Upload PDF, DOCX, or images",
+  "@uploadFileDescription": {
+    "description": "Upload file description"
+  },
+  "typeTopic": "Type Topic",
+  "@typeTopic": {
+    "description": "Type topic option"
+  },
+  "typeTopicDescription": "Enter any question or topic",
+  "@typeTopicDescription": {
+    "description": "Type topic description"
+  },
+  "supportedFormats": "Supported Formats",
+  "@supportedFormats": {
+    "description": "Supported formats"
+  },
+  "supportedFormatsDescription": "PDF, DOCX, DOC, TXT, JPG, PNG, and more",
+  "@supportedFormatsDescription": {
+    "description": "Supported formats description"
+  },
+  "selectFileToAnalyze": "Select a file to analyze with AI",
+  "@selectFileToAnalyze": {
+    "description": "Select file to analyze"
+  },
+  "tapToUpload": "Tap to Upload File",
+  "@tapToUpload": {
+    "description": "Tap to upload"
+  },
+  "orChooseOption": "Or choose an option below",
+  "@orChooseOption": {
+    "description": "Or choose option"
+  },
+  "gallery": "Gallery",
+  "@gallery": {
+    "description": "Gallery option"
+  },
+  "camera": "Camera",
+  "@camera": {
+    "description": "Camera option"
+  },
+  "sendToAI": "Send to AI",
+  "@sendToAI": {
+    "description": "Send to AI"
+  },
+  "processing": "Processing...",
+  "@processing": {
+    "description": "Processing"
+  },
+  "fileNotSupported": "File format not supported",
+  "@fileNotSupported": {
+    "description": "File not supported"
+  },
+  "filePickError": "Error picking file",
+  "@filePickError": {
+    "description": "File pick error"
+  },
+  "imagePickError": "Error picking image",
+  "@imagePickError": {
+    "description": "Image pick error"
+  },
+  "cameraError": "Error accessing camera",
+  "@cameraError": {
+    "description": "Camera error"
+  },
+  "processingError": "Error processing request",
+  "@processingError": {
+    "description": "Processing error"
+  },
+  "enterTopicDescription": "Enter any topic or question to get AI insights",
+  "@enterTopicDescription": {
+    "description": "Enter topic description"
+  },
+  "yourTopic": "Your Topic",
+  "@yourTopic": {
+    "description": "Your topic"
+  },
+  "enterTopicHint": "e.g., Explain quantum computing, summarize this concept...",
+  "@enterTopicHint": {
+    "description": "Enter topic hint"
+  },
+  "suggestedTopics": "Suggested Topics",
+  "@suggestedTopics": {
+    "description": "Suggested topics"
+  },
+  "askAI": "Ask AI",
+  "@askAI": {
+    "description": "Ask AI"
+  },
+  "pleaseEnterTopic": "Please enter a topic or question",
+  "@pleaseEnterTopic": {
+    "description": "Please enter topic"
+  },
+  "preparingResponse": "Preparing Response",
+  "@preparingResponse": {
+    "description": "Preparing response"
+  },
+  "processingInput": "Processing your input with AI...",
+  "@processingInput": {
+    "description": "Processing input"
+  },
+  "errorOccurred": "An Error Occurred",
+  "@errorOccurred": {
+    "description": "Error occurred"
+  },
+  "unknownError": "An unknown error occurred",
+  "@unknownError": {
+    "description": "Unknown error"
+  },
+  "goBack": "Go Back",
+  "@goBack": {
+    "description": "Go back"
+  },
+  "readyToHelp": "Ready to help",
+  "@readyToHelp": {
+    "description": "Ready to help"
+  },
+  "typing": "Typing...",
+  "@typing": {
+    "description": "Typing"
+  },
+  "justNow": "Just now",
+  "@justNow": {
+    "description": "Just now"
+  },
+  "askFollowUp": "Ask a follow-up question...",
+  "@askFollowUp": {
+    "description": "Ask follow up"
+  },
+  "apiConfiguration": "API Configuration",
+  "@apiConfiguration": {
+    "description": "API Configuration"
+  },
+  "configureAI": "Configure AI settings",
+  "@configureAI": {
+    "description": "Configure AI"
+  },
+  "apiKey": "API Key",
+  "@apiKey": {
+    "description": "API Key"
+  },
+  "enterApiKey": "Enter your OpenAI API key",
+  "@enterApiKey": {
+    "description": "Enter API key"
+  },
+  "apiUrl": "API URL",
+  "@apiUrl": {
+    "description": "API URL"
+  },
+  "customApiUrl": "Custom API URL (optional)",
+  "@customApiUrl": {
+    "description": "Custom API URL"
+  },
+  "model": "Model",
+  "@model": {
+    "description": "Model"
+  },
+  "selectModel": "Select AI model",
+  "@selectModel": {
+    "description": "Select model"
+  },
+  "testConnection": "Test Connection",
+  "@testConnection": {
+    "description": "Test connection"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Save"
+  },
+  "connectionSuccessful": "Connection successful!",
+  "@connectionSuccessful": {
+    "description": "Connection successful"
+  },
+  "connectionFailed": "Connection failed",
+  "@connectionFailed": {
+    "description": "Connection failed"
+  },
+  "apiKeyRequired": "API key is required",
+  "@apiKeyRequired": {
+    "description": "API key required"
+  },
+  "invalidApiKey": "Invalid API key format",
+  "@invalidApiKey": {
+    "description": "Invalid API key"
+  },
+  "settingsSaved": "Settings saved successfully",
+  "@settingsSaved": {
+    "description": "Settings saved"
+  },
+  "aiNotConfigured": "AI not configured. Please set your API key in settings.",
+  "@aiNotConfigured": {
+    "description": "AI not configured"
+  },
+  "configureNow": "Configure Now",
+  "@configureNow": {
+    "description": "Configure now"
   }
 }

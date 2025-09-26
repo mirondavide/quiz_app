@@ -5,7 +5,9 @@ import 'l10n/app_localizations.dart';
 import 'quiz_page.dart';
 import 'theme/app_theme.dart';
 import 'screens/language_selection_screen.dart';
+import 'screens/input_selection_screen.dart';
 import 'pages/about_page.dart';
+import 'pages/api_config_page.dart';
 import 'providers/settings_provider.dart';
 import 'services/language_service.dart';
 
@@ -66,7 +68,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
       case 0:
         return _buildHomePage();
       case 1:
-        return QuizPage();
+        return const InputSelectionScreen();
       case 2:
         return _buildSettingsPage();
       case 3:
@@ -78,10 +80,13 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
 
   Widget _buildHomePage() {
     final localizations = AppLocalizations.of(context)!;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
       decoration: BoxDecoration(
-        gradient: AppTheme.backgroundGradient,
+        gradient: isDarkMode
+            ? AppTheme.darkBackgroundGradient
+            : AppTheme.backgroundGradient,
       ),
       child: SafeArea(
         child: SingleChildScrollView(
@@ -101,7 +106,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: isDarkMode ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
                         ),
                       ),
                       SizedBox(height: 8),
@@ -109,7 +114,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                         localizations.welcomeSubtitle,
                         style: TextStyle(
                           fontSize: 16,
-                          color: AppTheme.textSecondary,
+                          color: isDarkMode ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
                         ),
                       ),
                     ],
@@ -149,7 +154,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                 decoration: BoxDecoration(
                   gradient: AppTheme.heroGradient,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: AppTheme.elevatedShadow,
+                  boxShadow: isDarkMode ? AppTheme.darkCardShadow : AppTheme.elevatedShadow,
                 ),
                 child: Column(
                   children: [
@@ -167,7 +172,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                     ),
                     SizedBox(height: 24),
                     Text(
-                      localizations.appTitle,
+                      localizations.aiAssistant,
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
@@ -177,7 +182,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                     ),
                     SizedBox(height: 12),
                     Text(
-                      localizations.aiQuizSubtitle,
+                      localizations.uploadOrAskAnything,
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white.withOpacity(0.9),
@@ -195,21 +200,30 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                 children: [
                   Expanded(
                     child: _buildQuickActionCard(
-                      icon: Icons.play_arrow_rounded,
-                      title: localizations.startQuiz,
-                      subtitle: localizations.createQuiz,
-                      gradient: AppTheme.successGradient,
-                      onTap: () => setState(() => _currentIndex = 1),
+                      icon: Icons.auto_awesome_rounded,
+                      title: localizations.startAI,
+                      subtitle: localizations.uploadOrType,
+                      gradient: AppTheme.primaryGradient,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InputSelectionScreen(),
+                          ),
+                        );
+                      },
+                      isDarkMode: isDarkMode,
                     ),
                   ),
                   SizedBox(width: 16),
                   Expanded(
                     child: _buildQuickActionCard(
-                      icon: Icons.settings_rounded,
-                      title: localizations.settings,
-                      subtitle: localizations.customize,
-                      gradient: AppTheme.primaryGradient,
-                      onTap: () => setState(() => _currentIndex = 2),
+                      icon: Icons.quiz_rounded,
+                      title: localizations.quiz,
+                      subtitle: localizations.legacyQuiz,
+                      gradient: AppTheme.successGradient,
+                      onTap: () => setState(() => _currentIndex = 1),
+                      isDarkMode: isDarkMode,
                     ),
                   ),
                 ],
@@ -229,6 +243,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
     required String subtitle,
     required Gradient gradient,
     required VoidCallback onTap,
+    required bool isDarkMode,
   }) {
     return GestureDetector(
       onTap: () {
@@ -240,7 +255,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
         decoration: BoxDecoration(
           gradient: gradient,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: AppTheme.cardShadow,
+          boxShadow: isDarkMode ? AppTheme.darkCardShadow : AppTheme.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,10 +292,13 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
     final localizations = AppLocalizations.of(context)!;
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final languageService = Provider.of<LanguageService>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Container(
       decoration: BoxDecoration(
-        gradient: AppTheme.backgroundGradient,
+        gradient: isDarkMode
+            ? AppTheme.darkBackgroundGradient
+            : AppTheme.backgroundGradient,
       ),
       child: SafeArea(
         child: SingleChildScrollView(
@@ -294,7 +312,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+                  color: isDarkMode ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
                 ),
               ),
               SizedBox(height: 8),
@@ -302,7 +320,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                 localizations.customize,
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppTheme.textSecondary,
+                  color: isDarkMode ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
                 ),
               ),
               
@@ -326,6 +344,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                       },
                       activeColor: AppTheme.primaryColor,
                     ),
+                    isDarkMode: isDarkMode,
                   ),
                   _buildSettingsTile(
                     icon: Icons.vibration_rounded,
@@ -339,8 +358,39 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                       },
                       activeColor: AppTheme.primaryColor,
                     ),
+                    isDarkMode: isDarkMode,
                   ),
                 ],
+                isDarkMode: isDarkMode,
+              ),
+              
+              SizedBox(height: 24),
+              
+              // AI Settings
+              _buildSettingsCard(
+                title: localizations.apiConfiguration,
+                children: [
+                  _buildSettingsTile(
+                    icon: Icons.api_rounded,
+                    title: localizations.apiConfiguration,
+                    subtitle: localizations.configureAI,
+                    trailing: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: isDarkMode ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
+                      size: 16,
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const APIConfigPage(),
+                        ),
+                      );
+                    },
+                    isDarkMode: isDarkMode,
+                  ),
+                ],
+                isDarkMode: isDarkMode,
               ),
               
               SizedBox(height: 24),
@@ -355,7 +405,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                     subtitle: languageService.getCurrentLanguageOption()?.nativeName ?? 'English',
                     trailing: Icon(
                       Icons.arrow_forward_ios_rounded,
-                      color: AppTheme.textSecondary,
+                      color: isDarkMode ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
                       size: 16,
                     ),
                     onTap: () {
@@ -366,8 +416,10 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                         ),
                       );
                     },
+                    isDarkMode: isDarkMode,
                   ),
                 ],
+                isDarkMode: isDarkMode,
               ),
               
               SizedBox(height: 24),
@@ -382,12 +434,14 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                     subtitle: localizations.appInfo,
                     trailing: Icon(
                       Icons.arrow_forward_ios_rounded,
-                      color: AppTheme.textSecondary,
+                      color: isDarkMode ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
                       size: 16,
                     ),
                     onTap: () => setState(() => _currentIndex = 3),
+                    isDarkMode: isDarkMode,
                   ),
                 ],
+                isDarkMode: isDarkMode,
               ),
               
             ],
@@ -400,13 +454,18 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
   Widget _buildSettingsCard({
     required String title,
     required List<Widget> children,
+    required bool isDarkMode,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: isDarkMode
+            ? AppTheme.darkSurfaceSecondary.withOpacity(0.5)
+            : Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: isDarkMode
+              ? AppTheme.darkSurfaceTertiary
+              : Colors.white.withOpacity(0.1),
           width: 1,
         ),
       ),
@@ -420,7 +479,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: isDarkMode ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
               ),
             ),
           ),
@@ -436,6 +495,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
     required String subtitle,
     Widget? trailing,
     VoidCallback? onTap,
+    required bool isDarkMode,
   }) {
     return Material(
       color: Colors.transparent,
@@ -468,7 +528,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.textPrimary,
+                        color: isDarkMode ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
                       ),
                     ),
                     SizedBox(height: 2),
@@ -476,7 +536,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
                       subtitle,
                       style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.textSecondary,
+                        color: isDarkMode ? AppTheme.darkTextSecondary : AppTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -493,6 +553,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
       body: AnimatedSwitcher(
@@ -504,10 +565,15 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.white.withOpacity(0.1),
-              Colors.white.withOpacity(0.05),
-            ],
+            colors: isDarkMode
+                ? [
+                    AppTheme.darkSurfaceSecondary.withOpacity(0.5),
+                    AppTheme.darkSurfaceSecondary.withOpacity(0.3),
+                  ]
+                : [
+                    Colors.white.withOpacity(0.1),
+                    Colors.white.withOpacity(0.05),
+                  ],
           ),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(24),
@@ -515,7 +581,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
           ),
           border: Border(
             top: BorderSide(
-              color: Colors.white.withOpacity(0.1),
+              color: isDarkMode
+                  ? AppTheme.darkSurfaceTertiary
+                  : Colors.white.withOpacity(0.1),
               width: 1,
             ),
           ),
@@ -532,7 +600,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
             backgroundColor: Colors.transparent,
             elevation: 0,
             selectedItemColor: AppTheme.primaryColor,
-            unselectedItemColor: AppTheme.textSecondary.withOpacity(0.6),
+            unselectedItemColor: isDarkMode
+                ? AppTheme.darkTextSecondary.withOpacity(0.6)
+                : AppTheme.textSecondary.withOpacity(0.6),
             selectedLabelStyle: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -543,23 +613,23 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
             ),
             items: [
               BottomNavigationBarItem(
-                icon: _buildNavIcon(Icons.home_rounded, 0),
-                activeIcon: _buildNavIcon(Icons.home_rounded, 0, isActive: true),
+                icon: _buildNavIcon(Icons.home_rounded, 0, isDarkMode: isDarkMode),
+                activeIcon: _buildNavIcon(Icons.home_rounded, 0, isActive: true, isDarkMode: isDarkMode),
                 label: localizations.home,
               ),
               BottomNavigationBarItem(
-                icon: _buildNavIcon(Icons.quiz_rounded, 1),
-                activeIcon: _buildNavIcon(Icons.quiz_rounded, 1, isActive: true),
-                label: localizations.quiz,
+                icon: _buildNavIcon(Icons.auto_awesome_rounded, 1, isDarkMode: isDarkMode),
+                activeIcon: _buildNavIcon(Icons.auto_awesome_rounded, 1, isActive: true, isDarkMode: isDarkMode),
+                label: localizations.aiChat,
               ),
               BottomNavigationBarItem(
-                icon: _buildNavIcon(Icons.settings_rounded, 2),
-                activeIcon: _buildNavIcon(Icons.settings_rounded, 2, isActive: true),
+                icon: _buildNavIcon(Icons.settings_rounded, 2, isDarkMode: isDarkMode),
+                activeIcon: _buildNavIcon(Icons.settings_rounded, 2, isActive: true, isDarkMode: isDarkMode),
                 label: localizations.settings,
               ),
               BottomNavigationBarItem(
-                icon: _buildNavIcon(Icons.info_rounded, 3),
-                activeIcon: _buildNavIcon(Icons.info_rounded, 3, isActive: true),
+                icon: _buildNavIcon(Icons.info_rounded, 3, isDarkMode: isDarkMode),
+                activeIcon: _buildNavIcon(Icons.info_rounded, 3, isActive: true, isDarkMode: isDarkMode),
                 label: localizations.about,
               ),
             ],
@@ -569,7 +639,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
     );
   }
   
-  Widget _buildNavIcon(IconData icon, int index, {bool isActive = false}) {
+  Widget _buildNavIcon(IconData icon, int index, {bool isActive = false, required bool isDarkMode}) {
     return AnimatedBuilder(
       animation: _bounceAnimation,
       builder: (context, child) {
@@ -591,7 +661,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> with TickerProv
             ) : null,
             child: Icon(
               icon,
-              color: isActive ? Colors.white : null,
+              color: isActive 
+                  ? Colors.white 
+                  : (isDarkMode ? AppTheme.darkTextSecondary : AppTheme.textSecondary),
               size: 24,
             ),
           ),
